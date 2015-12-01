@@ -64,12 +64,12 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell  {
         var songNameDict = NSDictionary();
-        songNameDict = audioList.objectAtIndex(indexPath.row) as NSDictionary
-        var songName = songNameDict.valueForKey("songName") as String
+        songNameDict = audioList.objectAtIndex(indexPath.row) as! NSDictionary
+        let songName = songNameDict.valueForKey("songName") as! String
         
         var albumNameDict = NSDictionary();
-        albumNameDict = audioList.objectAtIndex(indexPath.row) as NSDictionary
-        var albumName = albumNameDict.valueForKey("albumName") as String
+        albumNameDict = audioList.objectAtIndex(indexPath.row) as! NSDictionary
+        let albumName = albumNameDict.valueForKey("albumName") as! String
         
         let cell = UITableViewCell(style: .Subtitle, reuseIdentifier: nil)
         cell.textLabel?.font = UIFont(name: "Didot", size: 25.0)
@@ -89,7 +89,7 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
         return 54.0
     }
     
-    func tableView(tableView: UITableView,willDisplayCell cell: UITableViewCell!,forRowAtIndexPath indexPath: NSIndexPath!){
+    func tableView(tableView: UITableView,willDisplayCell cell: UITableViewCell,forRowAtIndexPath indexPath: NSIndexPath){
         tableView.backgroundColor = UIColor.clearColor()
         
         let backgroundView = UIView(frame: CGRectZero)
@@ -122,7 +122,7 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
         self.blurImageView.alpha = 0.0
         
         UIGraphicsBeginImageContext(self.view.bounds.size);
-        self.view.layer.renderInContext(UIGraphicsGetCurrentContext())
+        self.view.layer.renderInContext(UIGraphicsGetCurrentContext()!)
         finalImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         
@@ -130,11 +130,11 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     
     func applyBlurEffect(image: UIImage){
-        var imageToBlur = CIImage(image: image)
-        var blurfilter = CIFilter(name: "CIGaussianBlur")
-        blurfilter.setValue(imageToBlur, forKey: "inputImage")
-        var resultImage = blurfilter.valueForKey("outputImage") as CIImage
-        var blurredImage = UIImage(CIImage: resultImage)
+        let imageToBlur = CIImage(image: image)
+        let blurfilter = CIFilter(name: "CIGaussianBlur")
+        blurfilter!.setValue(imageToBlur, forKey: "inputImage")
+        let resultImage = blurfilter!.valueForKey("outputImage") as! CIImage
+        let blurredImage = UIImage(CIImage: resultImage)
         self.blurImageView.image = blurredImage
         self.blurImageView.hidden = false
         self.blurImageView.alpha = 1.0
@@ -176,7 +176,7 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     
     
-    func audioPlayerDidFinishPlaying(player: AVAudioPlayer!, successfully flag: Bool){
+    func audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully flag: Bool){
         if flag{
             currentAudioIndex++
             if currentAudioIndex>audioList.count-1{
@@ -191,7 +191,7 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     func setCurrentAudioPath(){
         currentAudio = readSongNameFromPlist(currentAudioIndex)
         currentAudioPath = NSURL(fileURLWithPath: NSBundle.mainBundle().pathForResource(currentAudio, ofType: "mp3")!)
-        println("\(currentAudioPath)")
+        print("\(currentAudioPath)")
     }
     
     
@@ -213,11 +213,17 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     func prepareAudio(){
         setCurrentAudioPath()
-        //keep alive audio at background
-        AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback, error: nil)
-        AVAudioSession.sharedInstance().setActive(true, error: nil)
+        do {
+            //keep alive audio at background
+            try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
+        } catch _ {
+        }
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch _ {
+        }
         UIApplication.sharedApplication().beginReceivingRemoteControlEvents()
-        audioPlayer = AVAudioPlayer(contentsOfURL: currentAudioPath, error: nil)
+        audioPlayer = try! AVAudioPlayer(contentsOfURL: currentAudioPath)
         audioPlayer.delegate = self
         audioLength = audioPlayer.duration
         playerProgressSlider.maximumValue = CFloat(audioPlayer.duration)
@@ -299,13 +305,13 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
             return
         }
         
-        var hour_   = abs(Int(audioPlayer.currentTime)/3600)
-        var minute_ = abs(Int((audioPlayer.currentTime/60) % 60))
-        var second_ = abs(Int(audioPlayer.currentTime  % 60))
+        let hour_   = abs(Int(audioPlayer.currentTime)/3600)
+        let minute_ = abs(Int((audioPlayer.currentTime/60) % 60))
+        let second_ = abs(Int(audioPlayer.currentTime  % 60))
         
-        var hour = hour_ > 9 ? "\(hour_)" : "0\(hour_)"
-        var minute = minute_ > 9 ? "\(minute_)" : "0\(minute_)"
-        var second = second_ > 9 ? "\(second_)" : "0\(second_)"
+        let hour = hour_ > 9 ? "\(hour_)" : "0\(hour_)"
+        let minute = minute_ > 9 ? "\(minute_)" : "0\(minute_)"
+        let second = second_ > 9 ? "\(second_)" : "0\(second_)"
         
         progressTimerLabel.text  = "\(hour):\(minute):\(second)"
         playerProgressSlider.value = CFloat(audioPlayer.currentTime)
@@ -322,13 +328,13 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     
     func calculateSurahLength(){
-        var hour_ = abs(Int(audioLength/3600))
-        var minute_ = abs(Int((audioLength/60) % 60))
-        var second_ = abs(Int(audioLength % 60))
+        let hour_ = abs(Int(audioLength/3600))
+        let minute_ = abs(Int((audioLength/60) % 60))
+        let second_ = abs(Int(audioLength % 60))
         
-        var hour = hour_ > 9 ? "\(hour_)" : "0\(hour_)"
-        var minute = minute_ > 9 ? "\(minute_)" : "0\(minute_)"
-        var second = second_ > 9 ? "\(second_)" : "0\(second_)"
+        let hour = hour_ > 9 ? "\(hour_)" : "0\(hour_)"
+        let minute = minute_ > 9 ? "\(minute_)" : "0\(minute_)"
+        let second = second_ > 9 ? "\(second_)" : "0\(second_)"
         totalLengthOfAudio = "\(hour):\(minute):\(second)"
     }
     
@@ -340,8 +346,8 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
         audioList = NSArray(contentsOfFile:path!)
         
         var songNameDict = NSDictionary();
-        songNameDict = audioList.objectAtIndex(indexNumber) as NSDictionary
-        var songName = songNameDict.valueForKey("songName") as String
+        songNameDict = audioList.objectAtIndex(indexNumber) as! NSDictionary
+        let songName = songNameDict.valueForKey("songName") as! String
         return songName
     }
     
@@ -357,7 +363,7 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     
     func updateSongNameLabel(){
-        var songName = readSongNameFromPlist(currentAudioIndex)
+        let songName = readSongNameFromPlist(currentAudioIndex)
         songNameLabel.text = songName
     }
     
